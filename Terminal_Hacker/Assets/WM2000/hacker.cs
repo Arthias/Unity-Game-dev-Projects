@@ -1,11 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class hacker : MonoBehaviour
 {
+    string[] level1pass = { "books", "aisle", "shelf", "password", "font", "borrow" };
+    string[] level2pass = { "handcuffs", "criminal", "prisioner", "shotgun", "pistol", "uniform" };
+    string menuhint = "You may type \"menu\" to go back";
+    int attempts;
     int level;
-    enum Screen { Menu, Level, Win };
+    string password;
+    enum Screen { Menu, Level, Win, Lose };
     Screen currentScreen;
     // Start is called before the first frame update
     void Start()
@@ -28,30 +31,77 @@ public class hacker : MonoBehaviour
     {
         if (input == "menu")
         {
-            Start();
+            ShowMainMenu();
         }
         else if (currentScreen == Screen.Menu)
         {
             MainMenu(input);
         }
+        else if (currentScreen == Screen.Level)
+        {
+            HandlePassword(input);
+        }
 
+    }
+
+    void HandlePassword(string input)
+    {
+        if (input == password)
+        {
+            WinScreen();
+        }
+        else if (attempts > 0)
+        {
+            attempts--;
+            Terminal.WriteLine("Password is incorrect");
+            Terminal.WriteLine("Hint: " + password.Anagram());
+            Terminal.WriteLine("remaining attepts: " + (attempts + 1));
+            Terminal.WriteLine(menuhint);
+        }
+        else
+        {
+            LoseScreen();
+        }
+
+    }
+
+    void LoseScreen()
+    {
+        currentScreen = Screen.Lose;
+        Terminal.WriteLine("You lost!");
+        Terminal.WriteLine(menuhint);
+    }
+    void WinScreen()
+    {
+        currentScreen = Screen.Win;
+        Terminal.ClearScreen();
+        Terminal.WriteLine("Access granted!");
+        InsertArt();
+        Terminal.WriteLine(menuhint);
+    }
+    private void InsertArt()
+    {
+        Terminal.WriteLine(@"
+         .-.
+        (@.@) 
+      '=.|m|.='
+      .='` ``=.
+"
+                           );
     }
 
     void MainMenu(string input)
     {
-        if (input == "1")
+        bool isValidLevel = (input == "1" || input == "2");
+        if (isValidLevel)
         {
-            level = 1;
-            StartGame();
-        }
-        else if (input == "2")
-        {
-            level = 2;
+            level = int.Parse(input);
             StartGame();
         }
         else
         {
             Terminal.WriteLine("Please select a Valid objective");
+            Terminal.WriteLine(menuhint);
         }
     }
 
@@ -59,7 +109,33 @@ public class hacker : MonoBehaviour
     {
         currentScreen = Screen.Level;
         Terminal.ClearScreen();
-        Terminal.WriteLine("Please enter Password");
+        Terminal.WriteLine("You have chosen level " + level);
+        SetPassword();
+        Terminal.WriteLine("Enter Password");
+        Terminal.WriteLine(menuhint);
+        Terminal.WriteLine("Hint: " + password.Anagram());
 
+    }
+
+    void SetPassword()
+    {
+        int index;
+        switch (level)
+        {
+            case 1:
+                attempts = 5;
+                index = Random.Range(0, level1pass.Length);
+                password = level1pass[index];
+                break;
+            case 2:
+                attempts = 3;
+                index = Random.Range(0, level1pass.Length);
+                password = level2pass[index];
+                break;
+            default:
+                Debug.LogError("Invalid Level Number " + level);
+                Start();
+                break;
+        }
     }
 }
